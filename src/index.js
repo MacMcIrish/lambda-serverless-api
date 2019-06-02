@@ -133,7 +133,9 @@ const Api = (options = {}) => {
 
   const wrap = (request, params, optionsOrHandler, handlerOrUndefined) => {
     const hasOptions = handlerOrUndefined !== undefined;
+    assert(!hasOptions || (optionsOrHandler instanceof Object && !Array.isArray(optionsOrHandler)));
     const handler = hasOptions ? handlerOrUndefined : optionsOrHandler;
+    assert(typeof handler === 'function');
     const opt = Object.assign(
       {
         limit: get(options, 'limit', 100)
@@ -147,11 +149,11 @@ const Api = (options = {}) => {
     if (params.filter(p => p.position === 'path').some(p => request.indexOf(`{${p.nameOriginal}}`) === -1)) {
       throw new Error('Path Parameter not defined in given path.');
     }
-    if (params.filter(p => p.paramType === 'FieldsParam' && p.autoPrune === true).length > 1) {
+    if (params.filter(p => p.paramType === 'FieldsParam' && typeof p.autoPrune === 'string').length > 1) {
       throw new Error('Only one auto pruning "FieldsParam" per endpoint.');
     }
     endpoints[request] = params;
-    const rawAutoPruneFieldsParam = params.find(p => p.paramType === 'FieldsParam' && p.autoPrune === true);
+    const rawAutoPruneFieldsParam = params.find(p => p.paramType === 'FieldsParam' && typeof p.autoPrune === 'string');
 
     const wrapHandler = ({
       event, context, rb, hdl
