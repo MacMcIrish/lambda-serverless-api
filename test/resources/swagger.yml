@@ -52,6 +52,9 @@ paths:
           type: string
           format: Str
           in: path
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
       responses:
         default:
           description: Unexpected Error
@@ -66,6 +69,9 @@ paths:
           type: string
           format: Str
           in: query
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
         - name: notification
           required: false
           type: string
@@ -77,6 +83,16 @@ paths:
           type: string
           format: Str
           in: header
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
+        - name: number
+          required: false
+          type: integer
+          format: Int
+          in: query
+          minimum: 10
+          maximum: 20
         - name: listParam
           required: false
           type: string
@@ -94,11 +110,25 @@ paths:
           maxLength: 2
           minItems: 1
           maxItems: 3
+        - name: enumParam
+          required: false
+          type: string
+          format: Enum
+          in: query
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
+          enum:
+            - enum1
+            - enum2
         - name: fieldsParam
           required: false
           type: string
           format: FieldsParam
           in: query
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
         - name: numberParam
           required: false
           type: number
@@ -138,6 +168,9 @@ paths:
           type: string
           format: Str
           in: query
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
         - in: body
           name: bodyParamData
           schema:
@@ -146,6 +179,9 @@ paths:
               username:
                 type: string
                 format: Str
+                pattern: >-
+                  /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+                  Object\])$/
               email:
                 type: string
                 format: Email
@@ -155,6 +191,10 @@ paths:
                 format: IsoDate
                 pattern: >-
                   /(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/
+              dateParam:
+                type: string
+                format: Date
+                pattern: '/^\d{4}-\d{2}-\d{2}$/'
               uuidParam:
                 type: string
                 format: UUID
@@ -177,6 +217,9 @@ paths:
               fieldsParam:
                 type: string
                 format: FieldsParam
+                pattern: >-
+                  /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+                  Object\])$/
               numberParam:
                 type: number
                 format: NumberParam
@@ -185,6 +228,9 @@ paths:
                 format: NumberList
                 items:
                   type: number
+              number:
+                type: integer
+                format: Int
               geoPointParam:
                 type: array
                 format: GeoPoint
@@ -225,6 +271,9 @@ paths:
           type: string
           format: Str
           in: header
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
         - in: body
           name: bodyParamData
           schema:
@@ -233,6 +282,9 @@ paths:
               username:
                 type: string
                 format: Str
+                pattern: >-
+                  /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+                  Object\])$/
               email:
                 type: string
                 format: Email
@@ -251,6 +303,9 @@ paths:
           type: string
           format: Str
           in: path
+          pattern: >-
+            /!?^(|undefined|undef|null|NULL|\(null\)|nil|NIL|true|false|True|False|TRUE|FALSE|None|NaN|Infinity|\-Infinity|INF|"|'|""|''|%|_|\-|\-\-|NUL|\[object
+            Object\])$/
       responses:
         default:
           description: Unexpected Error

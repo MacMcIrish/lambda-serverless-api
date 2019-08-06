@@ -61,12 +61,15 @@ module.exports.param = api.wrap('POST param', [
   api.Str('authorizer', 'context', { required: false }),
   api.Str('authorizer', 'header', { required: false }),
   api.IsoDate('isoDateParam', 'json', { required: false }),
+  api.Date('dateParam', 'json', { required: false }),
   api.UUID('uuidParam', 'json', { required: false }),
   api.List('listParam', 'json', { required: false }),
   api.StrList('strListParam', 'json', { required: false }),
   api.FieldsParam('fieldsParam', 'json', { required: false, fields: 'id', autoPrune: null }),
   api.Number('numberParam', 'json', { required: false }),
   api.NumberList('numberListParam', 'json', { required: false }),
+  api.Int('number', 'json', { required: false, min: 10, max: 20 }),
+  api.Int('number', 'query', { required: false, min: 10, max: 20 }),
   api.GeoPoint('geoPointParam', 'json', { required: false }),
   api.GeoRect('geoRectParam', 'json', { required: false }),
   api.GeoShape('geoShapeParam', 'json', { required: false }),
@@ -78,6 +81,10 @@ module.exports.param = api.wrap('POST param', [
     maxItemLength: 2,
     maxItems: 3,
     minItems: 1
+  }),
+  api.Enum('enumParam', 'query', {
+    required: false,
+    enums: ['enum1', 'enum2']
   }),
   api.FieldsParam('fieldsParam', 'query', { required: false, fields: 'id' }),
   api.Number('numberParam', 'query', { required: false }),
