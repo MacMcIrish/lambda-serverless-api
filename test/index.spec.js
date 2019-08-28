@@ -1,6 +1,7 @@
 const path = require('path');
 const difference = require('lodash.difference');
 const expect = require('chai').expect;
+const { describe } = require('node-tdd');
 const lambdaTester = require('lambda-tdd')({
   cwd: path.join(__dirname, '..'),
   verbose: process.argv.slice(2).indexOf('--verbose') !== -1,
@@ -11,15 +12,16 @@ const lambdaTester = require('lambda-tdd')({
 });
 const api = require('../src/index');
 
-lambdaTester.execute((process.argv.slice(2).find(e => e.startsWith('--filter=')) || '').substring(9));
+lambdaTester.execute((process.argv.slice(2).find((e) => e.startsWith('--filter=')) || '').substring(9));
 
-it('Testing Exports Synchronized.', () => {
-  expect(difference(Object.keys(api), Object.keys(api.Api()))).to.deep.equal(['Api']);
-  expect(difference(Object.keys(api.Api()), Object.keys(api)).sort()).to.deep.equal([
-    'generateDifference',
-    'generateSwagger',
-    'rollbar',
-    'router',
-    'wrap'
-  ]);
+describe('Testing index.js', () => {
+  it('Testing Exports Synchronized.', () => {
+    expect(difference(Object.keys(api), Object.keys(api.Api()))).to.deep.equal(['Api']);
+    expect(difference(Object.keys(api.Api()), Object.keys(api)).sort()).to.deep.equal([
+      'generateSwagger',
+      'rollbar',
+      'router',
+      'wrap'
+    ]);
+  });
 });

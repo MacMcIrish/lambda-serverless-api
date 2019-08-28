@@ -1,5 +1,5 @@
 const request = require('request-promise');
-const api = require('./../src/index').Api({
+const api = require('../src/index').Api({
   preflightCheck: ({
     origin, allowedMethods, accessControlRequestMethod, accessControlRequestHeaders
   }) => {
@@ -12,7 +12,7 @@ const api = require('./../src/index').Api({
       'X-Api-Key',
       'X-Amz-Security-Token',
       'X-Amz-User-Agent'
-    ].map(h => h.toLowerCase());
+    ].map((h) => h.toLowerCase());
     const allowedOrigins = [
       'https://test.com'
     ];
@@ -20,8 +20,8 @@ const api = require('./../src/index').Api({
     if (!allowedMethods.includes(accessControlRequestMethod)) {
       return false;
     }
-    if (!accessControlRequestHeaders.split(',').map(h => h
-      .trim().toLowerCase()).every(h => allowedHeaders.includes(h))) {
+    if (!accessControlRequestHeaders.split(',').map((h) => h
+      .trim().toLowerCase()).every((h) => allowedHeaders.includes(h))) {
       return false;
     }
     if (!allowedOrigins.includes(origin)) {
@@ -65,7 +65,7 @@ module.exports.param = api.wrap('POST param', [
   api.UUID('uuidParam', 'json', { required: false }),
   api.List('listParam', 'json', { required: false }),
   api.StrList('strListParam', 'json', { required: false }),
-  api.FieldsParam('fieldsParam', 'json', { required: false, fields: 'id', autoPrune: null }),
+  api.FieldsParam('fieldsParam', 'json', { required: false, fields: ['id'], autoPrune: null }),
   api.Number('numberParam', 'json', { required: false }),
   api.NumberList('numberListParam', 'json', { required: false }),
   api.Int('number', 'json', { required: false, min: 10, max: 20 }),
@@ -86,7 +86,7 @@ module.exports.param = api.wrap('POST param', [
     required: false,
     enums: ['enum1', 'enum2']
   }),
-  api.FieldsParam('fieldsParam', 'query', { required: false, fields: 'id' }),
+  api.FieldsParam('fieldsParam', 'query', { required: false, fields: ['id'] }),
   api.Number('numberParam', 'query', { required: false }),
   api.NumberList('numberListParam', 'query', { required: false }),
   api.GeoPoint('geoPointParam', 'query', { required: false }),
@@ -98,7 +98,7 @@ module.exports.param = api.wrap('POST param', [
     required: false,
     getter: () => request({ uri: 'https://foo.com', json: true })
   })
-], params => api.JsonResponse(params));
+], (params) => api.JsonResponse(params));
 
 module.exports.param2 = api.wrap('POST param2', [
   api.Str('username', 'json', { required: false }),

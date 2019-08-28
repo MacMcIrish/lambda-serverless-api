@@ -126,6 +126,11 @@ The object is expected to contains all headers that should be returned.
 The parameters passed into the function are 
 `origin, allowedMethods, accessControlRequestMethod, accessControlRequestHeaders, path`.
 
+## Prefix routes
+
+To prefix routes with a specific path, you can use the `routePrefix` option. This is handy when the api is not
+deployed under the domain root. Example `prefix/path/`.
+
 ## Default Headers
 
 Can be defined as a static object, or as a function taking in the request headers. This is e.g. useful for 
@@ -142,10 +147,6 @@ Takes parameters `event` (raw lambda function event), `context` (raw lambda func
 ## Swagger Documentation
 
 To generate swagger documentation we can call `api.generateSwagger()` after the api is initialized with routes.
-
-To validate that your swagger documentation matches your `serverless.yml` you can run `api.generateDifference()`.
-
-Examples can be found [here](test/test_swagger.js).
 
 ## Custom Error Messages
 

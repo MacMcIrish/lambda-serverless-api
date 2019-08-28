@@ -1,10 +1,7 @@
 const assert = require('assert');
-const xor = require('lodash.xor');
 const get = require('lodash.get');
 const difference = require('lodash.difference');
 const Joi = require('joi-strict');
-const objectScan = require('object-scan');
-const yaml = require('yaml-boost');
 const Rollbar = require('lambda-rollbar');
 const Limiter = require('lambda-rate-limiter');
 const Router = require('route-recognizer');
@@ -14,7 +11,7 @@ const swagger = require('./swagger');
 
 // todo: separate functions out and generify
 
-const normalizeName = name => name
+const normalizeName = (name) => name
   .replace(/(?:^\w|[A-Z]|\b\w)/g, (l, idx) => (idx === 0 ? l.toLowerCase() : l.toUpperCase()))
   .replace(/[^a-zA-Z0-9]+/g, '');
 
@@ -30,11 +27,11 @@ const parse = async (request, params, eventRaw) => {
       value: get(eventRaw, 'body')
     });
   }
-  const event = Object.assign({}, eventRaw, { body });
+  const event = { ...eventRaw, body };
 
   const invalidQsParams = difference(
     Object.keys(event.queryStringParameters || {}),
-    params.filter(p => p.position === 'query').map(p => p.name)
+    params.filter((p) => p.position === 'query').map((p) => p.name)
   );
   if (invalidQsParams.length !== 0) {
     throw response.ApiError('Invalid Query Param(s) detected.', 400, 99004, {
@@ -44,7 +41,7 @@ const parse = async (request, params, eventRaw) => {
 
   const invalidJsonParams = difference(
     Object.keys(event.body || {}),
-    params.filter(p => p.position === 'json').map(p => p.name)
+    params.filter((p) => p.position === 'json').map((p) => p.name)
   );
   if (invalidJsonParams.length !== 0) {
     throw response.ApiError('Invalid Json Body Param(s) detected.', 400, 99005, {
@@ -52,7 +49,7 @@ const parse = async (request, params, eventRaw) => {
     });
   }
 
-  const paramsPending = params.map(curParam => [normalizeName(curParam.name), curParam.get(event)]);
+  const paramsPending = params.map((curParam) => [normalizeName(curParam.name), curParam.get(event)]);
   const paramsPendingObj = paramsPending.reduce((prev, [key, value]) => Object.assign(prev, { [key]: value }), {});
   const resolvedParams = await Promise.all(paramsPending
     .map(async ([name, value]) => [name, typeof value === 'function' ? await value(paramsPendingObj) : value]));
@@ -61,27 +58,23 @@ const parse = async (request, params, eventRaw) => {
 
 const generateResponse = (err, resp, rb, options) => {
   if (get(err, 'isApiError') === true) {
-    return rb.warning(err).then(() => Object.assign(
-      {
-        statusCode: err.statusCode,
-        body: JSON.stringify({
-          message: err.message,
-          messageId: err.messageId,
-          context: err.context
-        })
-      },
-      Object.keys(options.defaultHeaders).length === 0 ? {} : { headers: options.defaultHeaders }
-    ));
+    return rb.warning(err).then(() => ({
+      statusCode: err.statusCode,
+      body: JSON.stringify({
+        message: err.message,
+        messageId: err.messageId,
+        context: err.context
+      }),
+      ...(Object.keys(options.defaultHeaders).length === 0 ? {} : { headers: options.defaultHeaders })
+    }));
   }
   if (get(resp, 'isApiResponse') === true) {
-    const headers = Object.assign({}, options.defaultHeaders, resp.headers);
-    return Object.assign(
-      {
-        statusCode: resp.statusCode,
-        body: get(resp, 'isJsonResponse') === true ? JSON.stringify(resp.payload) : resp.payload
-      },
-      Object.keys(headers).length === 0 ? {} : { headers }
-    );
+    const headers = { ...options.defaultHeaders, ...resp.headers };
+    return {
+      statusCode: resp.statusCode,
+      body: get(resp, 'isJsonResponse') === true ? JSON.stringify(resp.payload) : resp.payload,
+      ...(Object.keys(headers).length === 0 ? {} : { headers })
+    };
   }
   throw err;
 };
@@ -120,6 +113,7 @@ const Api = (options = {}) => {
   const endpoints = {};
   const router = new Router();
   const routeSignatures = [];
+  const routePrefix = get(options, 'routePrefix', '');
   const rollbar = Rollbar(get(options, 'rollbar', {}));
   const limiter = Limiter(get(options, 'limiter', {}));
   const defaultHeaders = get(options, 'defaultHeaders', {});
@@ -127,7 +121,7 @@ const Api = (options = {}) => {
   const preflightHandlers = {};
   const preRequestHook = get(options, 'preRequestHook');
 
-  const generateDefaultHeaders = inputHeaders => (typeof defaultHeaders === 'function'
+  const generateDefaultHeaders = (inputHeaders) => (typeof defaultHeaders === 'function'
     ? defaultHeaders(Object
       .entries(inputHeaders || {})
       .reduce((p, [k, v]) => Object.assign(p, { [normalizeName(k)]: v }), {}))
@@ -138,24 +132,23 @@ const Api = (options = {}) => {
     assert(!hasOptions || (optionsOrHandler instanceof Object && !Array.isArray(optionsOrHandler)));
     const handler = hasOptions ? handlerOrUndefined : optionsOrHandler;
     assert(typeof handler === 'function');
-    const opt = Object.assign(
-      {
-        limit: get(options, 'limit', 100)
-      },
-      hasOptions ? optionsOrHandler : {}
-    );
+    const opt = {
+      limit: get(options, 'limit', 100),
+      ...(hasOptions ? optionsOrHandler : {})
+    };
 
-    if (request.startsWith('GET ') && params.filter(p => p.position === 'json').length !== 0) {
+    if (request.startsWith('GET ') && params.filter((p) => p.position === 'json').length !== 0) {
       throw new Error('Can not use JSON parameter with GET requests.');
     }
-    if (params.filter(p => p.position === 'path').some(p => request.indexOf(`{${p.nameOriginal}}`) === -1)) {
+    if (params.filter((p) => p.position === 'path').some((p) => request.indexOf(`{${p.nameOriginal}}`) === -1)) {
       throw new Error('Path Parameter not defined in given path.');
     }
-    if (params.filter(p => p.paramType === 'FieldsParam' && typeof p.autoPrune === 'string').length > 1) {
+    if (params.filter((p) => p.paramType === 'FieldsParam' && typeof p.autoPrune === 'string').length > 1) {
       throw new Error('Only one auto pruning "FieldsParam" per endpoint.');
     }
     endpoints[request] = params;
-    const rawAutoPruneFieldsParam = params.find(p => p.paramType === 'FieldsParam' && typeof p.autoPrune === 'string');
+    const rawAutoPruneFieldsParam = params
+      .find((p) => p.paramType === 'FieldsParam' && typeof p.autoPrune === 'string');
 
     const wrapHandler = ({
       event, context, rb, hdl
@@ -173,10 +166,10 @@ const Api = (options = {}) => {
         ...hdl
       ]
         .reduce((p, c) => p.then(c), Promise.resolve())
-        .then(async payload => generateResponse(null, payload, rb, {
+        .then(async (payload) => generateResponse(null, payload, rb, {
           defaultHeaders: await generateDefaultHeaders(event.headers)
         }))
-        .catch(async err => generateResponse(err, null, rb, {
+        .catch(async (err) => generateResponse(err, null, rb, {
           defaultHeaders: await generateDefaultHeaders(event.headers)
         }));
     };
@@ -201,7 +194,7 @@ const Api = (options = {}) => {
     wrappedHandler.request = request;
 
     // test for route collisions
-    const routeSignature = request.split(/[\s/]/g).map(e => e.replace(/^{.*?}$/, ':param'));
+    const routeSignature = request.split(/[\s/]/g).map((e) => e.replace(/^{.*?}$/, ':param'));
     routeSignatures.forEach((signature) => {
       if (routeSignature.length !== signature.length) {
         return;
@@ -215,7 +208,7 @@ const Api = (options = {}) => {
     });
     routeSignatures.push(routeSignature);
 
-    const pathSegments = request.split(/[\s/]/g).map(e => e.replace(
+    const pathSegments = request.split(/[\s/]/g).map((e) => e.replace(
       /^{(.*?)(\+)?}$/,
       (_, name, type) => `${type === '+' ? '*' : ':'}${name}`
     ));
@@ -242,10 +235,11 @@ const Api = (options = {}) => {
                   'origin'
                 ].includes(h))
                 .reduce((p, [h, v]) => Object.assign(p, { [h]: v }), {});
-              const preflightHandlerParams = Object.assign({
+              const preflightHandlerParams = {
                 path: pathSegments.slice(1).join('/'),
-                allowedMethods: preflightHandlers[optionsPath]
-              }, headersRelevant);
+                allowedMethods: preflightHandlers[optionsPath],
+                ...headersRelevant
+              };
               const preflightHandlerResponse = await preflightCheck(preflightHandlerParams);
               const pass = preflightHandlerResponse instanceof Object && !Array.isArray(preflightHandlerResponse);
               return response.ApiResponse('', pass ? 200 : 403, pass ? preflightHandlerResponse : {});
@@ -282,26 +276,17 @@ const Api = (options = {}) => {
   routerFn.isApiEndpoint = true;
   routerFn.request = 'ANY';
 
-  const generateDifference = (swaggerFile, serverlessFile, serverlessVars) => {
-    const serverlessData = yaml.load(serverlessFile, serverlessVars);
-    const swaggerData = yaml.load(swaggerFile);
-
-    const serverlessRequests = objectScan(['functions.*.events[*].http'], { joined: false })(serverlessData)
-      .map(k => get(serverlessData, k))
-      .map(e => `${e.method.toUpperCase()} ${e.path}`);
-    const swaggerRequests = objectScan(['paths.*.*'], { joined: false })(swaggerData)
-      .map(e => `${e[2].toUpperCase()} ${e[1].substring(1)}`);
-
-    return xor(serverlessRequests, swaggerRequests);
-  };
-
-  return Object.assign({
-    wrap,
+  return {
+    wrap: (request, ...args) => {
+      const requestParsed = /^([A-Z]+)\s(.+)$/.exec(request);
+      assert(Array.isArray(requestParsed) && requestParsed.length === 3);
+      return wrap(`${requestParsed[1]} ${routePrefix}${requestParsed[2]}`, ...args);
+    },
     rollbar,
     router: routerFn,
-    generateSwagger: (existing = {}) => swagger(endpoints, existing),
-    generateDifference
-  }, staticExports);
+    generateSwagger: () => swagger(endpoints),
+    ...staticExports
+  };
 };
 
-module.exports = Object.assign({ Api }, staticExports);
+module.exports = { Api, ...staticExports };

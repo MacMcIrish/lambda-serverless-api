@@ -1,4 +1,5 @@
 const expect = require('chai').expect;
+const { describe } = require('node-tdd');
 const response = require('../src/response');
 const { Api } = require('../src/index');
 const { identity } = require('./misc');
@@ -60,7 +61,7 @@ describe('Testing Response', () => {
   });
 
   it('Testing defaultHeaders function (echo)', (done) => {
-    api = Api({ defaultHeaders: headers => headers });
+    api = Api({ defaultHeaders: (headers) => headers });
     api.wrap('GET path', [], identity(api));
     api.router({
       httpMethod: 'GET',
@@ -80,7 +81,7 @@ describe('Testing Response', () => {
   });
 
   it('Testing defaultHeaders function (empty)', (done) => {
-    api = Api({ defaultHeaders: headers => headers });
+    api = Api({ defaultHeaders: (headers) => headers });
     api.wrap('GET path', [], identity(api));
     api.router({ httpMethod: 'GET', path: '/path' }, {}, (err, resp) => {
       expect(err).to.equal(null);
@@ -93,7 +94,7 @@ describe('Testing Response', () => {
   });
 
   it('Testing Multi Methods for Options Request', (done) => {
-    api = Api({ preflightCheck: args => args });
+    api = Api({ preflightCheck: (args) => args });
     api.wrap('GET path', [], identity(api));
     api.wrap('DELETE path', [], identity(api));
     api.router({ httpMethod: 'OPTIONS', path: '/path' }, {}, (err, resp) => {

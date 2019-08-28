@@ -1,35 +1,66 @@
-const fs = require('fs');
 const path = require('path');
+const fs = require('smart-fs');
 const expect = require('chai').expect;
-const yaml = require('js-yaml');
-const appRoot = require('app-root-path');
-const api = require('./handler').internalApi;
+const { describe } = require('node-tdd');
+const api = require('../src/index');
+const testApi = require('./handler').internalApi;
 
 describe('Testing Swagger', () => {
-  it('Updating Swagger File with API definitions.', (done) => {
-    const file = path.join(appRoot.path, 'test', 'resources', 'swagger.yml');
-    Promise.resolve(fs.readFileSync(file))
-      .then(yaml.safeLoad)
-      .then(api.generateSwagger)
-      .then(swagger => yaml.dump(swagger))
-      .then(swagger => fs.writeFileSync(file, swagger))
-      .then(done)
-      .catch(done.fail);
+  it('Updating Swagger File with API definitions.', async () => {
+    const swaggerFile = path.join(__dirname, 'resources', 'swagger.yml');
+    const swaggerContent = await testApi.generateSwagger();
+    const result = fs.smartWrite(swaggerFile, swaggerContent);
+    expect(result, 'Swagger file updated').to.equal(false);
   });
 
-  it('Testing serverless.yml', () => {
-    expect(api.generateDifference(
-      path.join(appRoot.path, 'test', 'resources', 'swagger.yml'),
-      path.join(appRoot.path, 'test', 'resources', 'serverless.yml')
-    )).to.deep.equal([]);
+  it('Testing Empty Api', async () => {
+    const docs = await api.Api().generateSwagger();
+    expect(docs).to.deep.equal({
+      swagger: '2.0',
+      produces: ['application/json'],
+      info: { title: 'Api Name', version: '0.0.1' },
+      paths: {}
+    });
   });
 
-  it('Testing Empty Compare', () => {
-    expect(JSON.stringify(api.generateSwagger())).to.equal('{}');
-  });
-
-  it('Testing Unexpected Swagger Endpoint', () => {
-    expect(() => api.generateSwagger({ paths: { '/path': { GET: {} } } }))
-      .to.throw('Unexpected swagger endpoint(s) detected: paths./path.GET');
+  it('Testing Route Prefix', async () => {
+    const prefixApi = await api.Api({ routePrefix: 'prefix/' });
+    prefixApi.wrap('GET uri', [], () => api.JsonResponse({}));
+    const docs = await prefixApi.generateSwagger();
+    expect(await new Promise((resolve) => prefixApi.router({
+      path: '/prefix/uri',
+      httpMethod: 'GET'
+    }, {}, (_, r) => resolve(r)))).to.deep.equal({
+      body: '{}',
+      statusCode: 200
+    });
+    expect(await new Promise((resolve) => prefixApi.router({
+      path: '/uri',
+      httpMethod: 'GET'
+    }, {}, (_, r) => resolve(r)))).to.deep.equal({
+      body: '{"message":"Method / Route not allowed"}',
+      statusCode: 403
+    });
+    expect(docs).to.deep.equal({
+      swagger: '2.0',
+      produces: ['application/json'],
+      info: { title: 'Api Name', version: '0.0.1' },
+      paths: {
+        '/prefix/uri': {
+          get: {
+            consumes: [
+              'application/json'
+            ],
+            description: '',
+            parameters: [],
+            responses: {
+              default: {
+                description: 'Unexpected Error'
+              }
+            }
+          }
+        }
+      }
+    });
   });
 });
