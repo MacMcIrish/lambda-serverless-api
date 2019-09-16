@@ -16,7 +16,7 @@ Provides support for:
 - Parameter Validation and Response Generation
 - Generation of [Swagger](https://swagger.io/) Documentation
 - Rate Limiting using [lambda-rate-limiter](https://github.com/blackflux/lambda-rate-limiter)
-- Logging of ApiErrors using [lambda-rollbar](https://github.com/blackflux/lambda-rollbar)
+- Logging of ApiErrors using [lambda-monitor-logger](https://github.com/blackflux/lambda-monitor-logger)
 
 ## Install
 
@@ -24,26 +24,20 @@ Provides support for:
 
 ## Getting Started
 
+// TODO: BELOW IS OUTDATED ....
+
+
 First we need to wrap our lambda endpoint. Inside the lambda function we can then use `ApiError` and `JsonResponse` as following:
 
 <!-- eslint-disable import/no-unresolved -->
 ```js
-const api = require('lambda-serverless-api').Api({
-  limit: 100, // default limit for routes
-  limiter: {},
-  rollbar: {},
-  defaultHeaders: {},
-  preflightCheck: () => false,
-  preRequestHook: (event, context, rb) => {
-    // log or throw error here
-  }
-});
+const api = require('lambda-serverless-api').Api({/* options */});
 
 module.exports = api.wrap('POST register', [
   api.Str('name', 'json', false),
   api.Email('email', 'json'),
   api.Str('password', 'json')
-], /* options, */ ({ name = null, email = null, password = null }, context, rb, event) => {
+], /* options, */ ({ name = null, email = null, password = null }, context, event) => {
   // handle registration logic here ...
   if (new Date().getHours() === 4) {
     throw api.ApiError('I am a teapot', 418);
@@ -59,8 +53,6 @@ The first `api.wrap` parameter defines the route and is re-declared in `serverle
 A list of supported parameters can be found [here](lib/param.js).
 
 If you want to send plain text instead of json, you can use `ApiResponse`. You can also set custom status codes and headers as second and third parameter respectively.
-
-The `defaultHeaders` are returned with every request that isn't an unexpected crash. This is handy if you are planning to set up Access headers.
 
 Parameter names are converted to camel case. E.g. `X-Custom-Header` would be passed as `xCustomHeader`.
 
@@ -114,18 +106,6 @@ module.exports = api.wrap('POST name', [
 });
 ```
 
-## Preflight Requests
-
-When the API is exposed to web clients one needs to deal with preflight 
-"OPTIONS" requests. By default all OPTIONS requests are denied. To 
-customize this one needs to overwrite the `preflightCheck` option.
-
-An example implementation of this can be found in `test/handler.js`.
-The response is expected to be an object on success and otherwise false.
-The object is expected to contains all headers that should be returned. 
-The parameters passed into the function are 
-`origin, allowedMethods, accessControlRequestMethod, accessControlRequestHeaders, path`.
-
 ## Prefix routes
 
 To prefix routes with a specific path, you can use the `routePrefix` option. This is handy when the api is not
@@ -137,12 +117,6 @@ Can be defined as a static object, or as a function taking in the request header
 returning the correct origin for cross origin requests with multiple allowed origins.
 
 Note that the request headers are normalized to lower camel case.
-
-## Pre Request Hook
-
-Can define a `preRequestHook` function. This can be used to log events or throw api errors generically.
-
-Takes parameters `event` (raw lambda function event), `context` (raw lambda function context) and `rb` (rollbar logger).
 
 ## Swagger Documentation
 
@@ -159,9 +133,11 @@ Rate limiting uses [lambda-rate-limiter](https://github.com/blackflux/lambda-rat
 
 To customize rate limiting, the package options are passed as `limiter` into the constructor.
 
+By default rate limiting uses the client ip (`['requestContext.identity.sourceIp']`). This can be customized by using `rateLimitTokenPaths` as an array (evaluated left to right) to target different keys on the lambda event. If rate limit is enabled and no valid rate limit token is detected on an event, an internal exception is thrown. 
+
 ## Logging Api Errors / Exceptions
 
-To monitor api errors and exceptions [lambda-rollbar](https://github.com/blackflux/lambda-rollbar) can be enabled. Options are passed by putting them as `rollbar` into the constructor.
+To monitor api errors and exceptions, [lambda-monitor](https://github.com/blackflux/lambda-monitor) should be configured.
 
 ## Loading serverless.yml
 

@@ -9,10 +9,17 @@
     }
   },
   "logs": {
-    "to.deep.equal": []
+    "to.deep.equal": [
+      "INFO: {\"event\":{\"path\":\"/some/path\",\"httpMethod\":\"GET\",\"requestContext\":{\"identity\":{\"sourceIp\":\"127.0.0.1\"}},\"pathParameters\":{}},\"response\":{\"statusCode\":200,\"body\":\"{}\"}}"
+    ]
   },
   "event": {
     "path": "/some/path",
-    "httpMethod": "GET"
+    "httpMethod": "GET",
+    "requestContext": {
+      "identity": {
+        "sourceIp": "127.0.0.1"
+      }
+    }
   }
 }

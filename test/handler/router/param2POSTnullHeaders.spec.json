@@ -9,11 +9,18 @@
     }
   },
   "logs": {
-    "to.deep.equal": []
+    "to.deep.equal": [
+      "INFO: {\"event\":{\"path\":\"/param2\",\"httpMethod\":\"POST\",\"headers\":null,\"requestContext\":{\"identity\":{\"sourceIp\":\"127.0.0.1\"}},\"pathParameters\":{}},\"response\":{\"statusCode\":200,\"body\":\"{\\\"username\\\":\\\"default\\\",\\\"email\\\":\\\"default\\\",\\\"xCustomHeader\\\":null}\"}}"
+    ]
   },
   "event": {
     "path": "/param2",
     "httpMethod": "POST",
-    "headers": null
+    "headers": null,
+    "requestContext": {
+      "identity": {
+        "sourceIp": "127.0.0.1"
+      }
+    }
   }
 }
