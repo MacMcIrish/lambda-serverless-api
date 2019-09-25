@@ -27,7 +27,6 @@ class Abstract {
     this.type = null;
   }
 
-  // eslint-disable-next-line class-methods-use-this
   validate(value) {
     return !(this.stringInput && typeof value !== 'string');
   }
@@ -35,9 +34,7 @@ class Abstract {
   get(event) {
     const result = get(event, `${positionMapping[this.position]}.${
       this.position === 'header'
-        ? Object
-          .keys(get(event, positionMapping[this.position]) || {})
-          .reduce((prev, cur) => Object.assign(prev, { [cur.toLowerCase()]: cur }), {})[this.name.toLowerCase()]
+        ? this.name.toLowerCase()
         : this.name
     }`);
     if (result === undefined) {

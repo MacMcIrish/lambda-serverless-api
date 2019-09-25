@@ -1,7 +1,7 @@
 const expect = require('chai').expect;
 const { describe } = require('node-tdd');
 const response = require('../src/response');
-const { Api } = require('../src/index');
+const { Api, ApiError } = require('../src/index');
 const { identity } = require('./misc');
 
 
@@ -26,7 +26,11 @@ describe('Testing Response', () => {
   });
 
   it('Testing authorizer deny', (done) => {
-    api = Api({ authorizer: () => false });
+    api = Api({
+      preValidation: () => {
+        throw ApiError('Unauthorized', 401);
+      }
+    });
     api.wrap('GET path', [], identity(api));
     api.router({
       httpMethod: 'GET',
@@ -43,7 +47,7 @@ describe('Testing Response', () => {
   });
 
   it('Testing authorizer ok', (done) => {
-    api = Api({ authorizer: () => true });
+    api = Api({ preValidation: () => {} });
     api.wrap('GET path', [], identity(api));
     api.router({
       httpMethod: 'GET',
@@ -133,19 +137,20 @@ describe('Testing Response', () => {
     });
   });
 
-  it('Testing Default Options Request Fails', (done) => {
+  it('Testing Default Options Request Fails', async () => {
     api.wrap('GET path', [], identity(api));
-    api.router({
+    const [err, resp] = await new Promise((resolve) => api.router({
       httpMethod: 'OPTIONS',
       path: '/path',
-      requestContext: { identity: { sourceIp: '127.0.0.1' } }
-    }, {}, (err, resp) => {
-      expect(err).to.equal(null);
-      expect(resp).to.deep.equal({
-        statusCode: 403,
-        body: ''
-      });
-      done();
+      requestContext: { identity: { sourceIp: '127.0.0.1' } },
+      headers: {
+        Origin: 'https://some-origin.com'
+      }
+    }, {}, (...args) => resolve(args)));
+    expect(err).to.equal(null);
+    expect(resp).to.deep.equal({
+      statusCode: 403,
+      body: '{"message":"Required header missing"}'
     });
   });
 
